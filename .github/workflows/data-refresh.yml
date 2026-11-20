@@ -17,7 +17,7 @@ permissions:
   contents: write
   actions: read
 concurrency:
-  group: electoral-data-refresh
+  group: electoral-data-refresh-v2
   cancel-in-progress: true
 jobs:
   refresh:
