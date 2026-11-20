@@ -45,3 +45,19 @@ O arquivo bruto usado no pipeline é servido por uma API versionada de distribui
 ## Citação
 
 MIT Election Data and Science Lab, 2018, "County Presidential Election Returns 2000-2024", https://doi.org/10.7910/DVN/VOQCHQ, Harvard Dataverse, V20. Licença CC0 1.0.
+
+
+## Segunda integração — U.S. House 1976–2024
+
+- Dataset: MIT Election Data and Science Lab, *U.S. House 1976–2024*.
+- DOI: 10.7910/DVN/IG0UN2; Harvard Dataverse, versão 15; licença CC0 1.0.
+- Cobertura: retornos por distrito congressional, incluindo eleições especiais; cada linha representa um candidato em uma linha partidária (*ballot line*).
+- O conector consulta os metadados do espelho versionado, exige validação `pass`, confere DOI/licença e fixa a versão no URL do download. O SHA-256 identifica os bytes baixados.
+- O identificador `contest_id` incorpora ano, estado, distrito, etapa, eleição especial e runoff. `source_row_id` preserva a identificação da linha original. Isso evita colapsar eleições especiais e regulares no mesmo distrito.
+- `candidatevotes` nulo é preservado em Bronze e excluído de Silver, com contagem no manifesto; não é convertido em zero. Linhas `unofficial` são marcadas como `preliminary`; as demais como `historical_final`.
+- O explorador público agrega o voto por estado e partido apenas nas eleições gerais regulares, excluindo primárias, especiais e runoffs. O denominador `totalvotes` é contado uma vez por contest, não uma vez por candidato. A participação resultante é participação nos votos reportados, não turnout de eleitores elegíveis.
+- Artefatos: `data/raw/mit_election_lab.us_house_1976_2024/`, `data/bronze/mit_us_house_1976_2024.parquet`, `data/silver/mit_us_house_1976_2024.parquet`, manifesto e `apps/web/data/house-timeseries.json`.
+
+Citação recomendada: MIT Election Data and Science Lab, 2017, "U.S. House 1976–2024", https://doi.org/10.7910/DVN/IG0UN2, Harvard Dataverse, V15, UNF:6:cIJWG41N8qe3Kyf7oKuPdw== [fileUNF].
+
+**Limite de cobertura:** a integração House é distrital e não contém retornos precinct-level. O dataset também inclui eleições especiais; a série comparativa publicada seleciona somente eleições gerais regulares para reduzir dupla contagem e não deve ser confundida com a totalidade das disputas ocorridas em cada ano.
