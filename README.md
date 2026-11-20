@@ -60,3 +60,12 @@ A matriz `Voting NJ Congressmen.csv` e os scripts/gráficos R permanecem como es
 `apps/web` dashboard · `src/electoral` pacote/API · `config` catálogo · `docs` arquitetura e método · `tests` testes · `data/{raw,bronze,silver,gold}` camadas locais (ignoradas pelo Git).
 
 Licença GPL-3.0.
+
+
+## Séries temporais e dados integrados
+
+O dashboard inclui um explorador de séries presidenciais 2000–2024, com seleção de território (Estados Unidos ou estado) e métrica (votos absolutos ou participação partidária). A fonte inicial é o MIT Election Data and Science Lab via Harvard Dataverse, DOI 10.7910/DVN/VOQCHQ, licença CC0 1.0.
+
+O workflow Refresh electoral datasets resolve a versão mais recente pelo DOI, preserva o arquivo bruto durante a execução, valida checksum MD5 do publisher e SHA-256 local, normaliza para Parquet e gera JSON agregado para o GitHub Pages. O denominador é deduplicado por county e ciclo antes da agregação. Ausências de votos não são imputadas como zero. A participação nos votos não deve ser interpretada como turnout da população elegível.
+
+A primeira integração cobre apenas Presidência. Senate, House, governadores e legislativos estaduais permanecem no escopo arquitetural e dependem de conectores e validações próprios; não serão apresentados como dados disponíveis antes da ingestão efetiva. Consulte [proveniência e transformações](docs/data-sources.md).
