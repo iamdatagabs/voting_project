@@ -65,7 +65,8 @@ def main() -> None:
             raise RuntimeError("Dataverse latest version has no county presidential data file")
         source_file = candidates[0]["dataFile"]
         file_id = source_file["id"]
-        checksum = source_file.get("checksum") or {}\n        expected_md5 = source_file.get("md5") or checksum.get("value")
+        checksum = source_file.get("checksum") or {}
+        expected_md5 = source_file.get("md5") or checksum.get("value")
         raw_path = raw_dir / source_file["filename"]
         # Download the version-resolved dataset bundle through Dataverse's
         # documented dataset-level access endpoint.
