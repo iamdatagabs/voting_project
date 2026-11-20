@@ -145,3 +145,75 @@ async function loadSenate() {
  }
 }
 loadSenate();
+
+
+// State executive and legislative contests from MEDSL 2024 precinct archives.
+let stateOfficeData = null;
+function stateOfficeRows() {
+ if (!stateOfficeData) return [];
+ const office = $("state-office-type").value;
+ const state = $("state-office-state").value;
+ const district = $("state-office-district").value;
+ return stateOfficeData.results.filter(row =>
+  row.office === office && row.state_po === state &&
+  (!district || String(row.district || "") === district)
+ ).sort((a,b) => Number(b.votes) - Number(a.votes));
+}
+function renderStateOffices() {
+ if (!stateOfficeData) return;
+ const rows = stateOfficeRows();
+ $("state-office-results").innerHTML = rows.length
+  ? rows.map(row => '<tr><td>' + (row.district || "Estadual") + '</td><td>' + (row.party || "Sem classificação") + '</td><td>' + fmt.format(Number(row.votes)) + '</td><td>' + (Number(row.vote_share) * 100).toFixed(2) + '%</td></tr>').join("")
+  : '<tr><td colspan="4" class="empty">Não há observações para este cargo, estado e distrito em 2024.</td></tr>';
+ $("state-office-footnote").textContent =
+  "Fonte: MIT Election Data and Science Lab · commit " + stateOfficeData.metadata.repository_commit.slice(0, 12) +
+  ". " + fmt.format(stateOfficeData.metadata.silver_rows) + " registros Silver e " +
+  stateOfficeData.metadata.contests + " contests. Arquivos de 51 estados/DC verificados por Git blob SHA-1; " +
+  stateOfficeData.metadata.missing_votes_excluded + " votos ausentes e " +
+  stateOfficeData.metadata.negative_votes_excluded + " valores negativos não entram em Silver. " +
+  "Somente mode=TOTAL; ausência de distrito impede classificação distrital e é excluída.";
+}
+function updateStateOfficeDistricts() {
+ if (!stateOfficeData) return;
+ const office = $("state-office-type").value;
+ const state = $("state-office-state").value;
+ const districts = [...new Set(stateOfficeData.results
+  .filter(row => row.office === office && row.state_po === state && row.district)
+  .map(row => String(row.district)))].sort((a,b) => a.localeCompare(b,undefined,{numeric:true}));
+ $("state-office-district").innerHTML = '<option value="">Todos</option>' +
+  districts.map(d => '<option value="' + d + '">' + d + '</option>').join("");
+}
+async function loadStateOffices() {
+ try {
+  const response = await fetch("data/state-offices-2024.json");
+  if (!response.ok) throw Error("State office dataset not published");
+  stateOfficeData = await response.json();
+  const stateNames = new Map();
+  for (const row of stateOfficeData.results) {
+   if (!stateNames.has(row.state_po)) stateNames.set(row.state_po, row.state_fips);
+  }
+  const states = [...stateNames.keys()].sort();
+  $("state-office-state").innerHTML = states.map(code =>
+   '<option value="' + code + '">' + code + '</option>'
+  ).join("");
+  $("state-office-source").textContent = "MEDSL · 2024 · " +
+   fmt.format(stateOfficeData.metadata.silver_rows) + " registros";
+  $("state-office-type").addEventListener("change", () => {
+   updateStateOfficeDistricts();
+   renderStateOffices();
+  });
+  $("state-office-state").addEventListener("change", () => {
+   updateStateOfficeDistricts();
+   renderStateOffices();
+  });
+  $("state-office-district").addEventListener("change", renderStateOffices);
+  updateStateOfficeDistricts();
+  renderStateOffices();
+  $("offices").textContent = "6 · Presidência, Senado, Câmara e estaduais";
+ } catch (error) {
+  $("state-office-results").innerHTML =
+   '<tr><td colspan="4" class="empty">Dados estaduais indisponíveis. Execute Refresh electoral datasets.</td></tr>';
+  console.error(error);
+ }
+}
+loadStateOffices();
