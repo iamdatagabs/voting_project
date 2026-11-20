@@ -14,7 +14,7 @@ Cada linha representa votos de um candidato em uma disputa e unidade geográfica
 | candidate / party | candidato e partido conforme fonte |
 | votes | votos do candidato, inteiro não negativo |
 | total_votes | total da disputa na geografia, se fornecido |
-| result_status | preliminary, certified ou estimated |
+| result_status | preliminary, certified, estimated ou historical_final |
 | source_id / source_url | identificador da fonte/versão e URL |
 | source_published_at | data de publicação pela fonte |
 | extracted_at | timestamp de captura pelo pipeline |
