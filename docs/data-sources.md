@@ -6,7 +6,7 @@
 - Identificador persistente: DOI 10.7910/DVN/VOQCHQ.
 - Repositório: Harvard Dataverse.
 - Licença declarada: CC0 1.0.
-- O conector consulta um espelho versionado que declara a atribuição MIT/Harvard Dataverse e validação da fonte. A cada execução, lê os metadados, exige validação `pass`, confirma o DOI e baixa a versão explicitamente fixada na URL. O espelho publica versão, licença e atribuição da fonte; o SHA-256 local identifica exatamente os bytes baixados.
+- O conector consulta um espelho versionado que declara a atribuição MIT/Harvard Dataverse e validação da fonte. A cada execução, lê os metadados, exige validação `pass`, confirma o DOI e baixa a versão explicitamente fixada na URL. O espelho publica versão, licença e atribuição da fonte; o SHA-256 local identifica exatamente os bytes baixados. O hash do arquivo bruto upstream é registrado separadamente e não é confundido com o hash do CSV distribuído.
 
 ## Execução reproduzível
 
@@ -15,9 +15,10 @@ python -m pip install pandas pyarrow httpx
 python scripts/ingest_mit_countypres.py
 ```
 
-O workflow `.github/workflows/data-refresh.yml` executa semanalmente e também aceita execução manual. Ele baixa o arquivo original, calcula SHA-256 local, valida a atribuição e o estado de validação do espelho, valida o esquema e a consistência do denominador por unidade/ciclo, e gera:
+O workflow `.github/workflows/data-refresh.yml` executa semanalmente e também aceita execução manual. Ele baixa o CSV disponibilizado pelo espelho, calcula SHA-256 local, valida a atribuição e o estado de validação do espelho, valida o esquema e a consistência do denominador por unidade/ciclo, e gera:
 - `data/raw/mit_election_lab.county_president/`: bytes originais;
-- `data/silver/mit_county_president_2000_2024.parquet`: observações canônicas;
+- `data/bronze/mit_county_president_2000_2024.parquet`: registros de origem normalizados, preservando nulos;
+- `data/silver/mit_county_president_2000_2024.parquet`: observações canônicas validadas;
 - `data/silver/mit_county_president_2000_2024.manifest.json`: manifesto de proveniência;
 - `apps/web/data/presidential-timeseries.json`: agregados estaduais e nacionais para o Pages.
 
@@ -25,7 +26,7 @@ As camadas brutas e Parquet são artefatos de execução, não são commitadas. 
 
 ## Regras de transformação
 
-1. O arquivo de origem é tab-delimited; colunas de FIPS são lidas como texto para preservar zeros à esquerda.
+1. O arquivo distribuído é CSV delimitado por vírgulas; colunas de FIPS são lidas como texto para preservar zeros à esquerda.
 2. Contagens de votos são convertidas numericamente; contagens nulas de candidato são excluídas e contabilizadas no manifesto, nunca imputadas como zero.
 3. A chave territorial usa o identificador county quando disponível; unidades sem county ID recebem identificador determinístico a partir de estado e unit_id. O contrato distingue county de outras unidades de reporte.
 4. O denominador `total_votes` é deduplicado por county e ciclo antes de agregar para estado e país. A repetição do total em cada linha de candidato não pode inflar o denominador.
