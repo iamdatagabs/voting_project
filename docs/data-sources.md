@@ -23,6 +23,8 @@ O workflow `.github/workflows/data-refresh.yml` executa semanalmente e também a
 - `apps/web/data/presidential-timeseries.json`: agregados estaduais e nacionais para o Pages.
 
 As camadas brutas e Parquet são artefatos de execução, não são commitadas. O JSON publicado contém agregados e metadados de origem.
+O workflow também publica um artefato de execução com Raw, Bronze, Silver e manifesto, retido por 90 dias no GitHub Actions. Somente o JSON agregado é commitado para o Pages; os arquivos brutos e Parquet não poluem o histórico Git.
+
 
 ## Regras de transformação
 
