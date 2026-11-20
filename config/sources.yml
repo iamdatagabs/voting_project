@@ -24,6 +24,13 @@ sources:
         delivery: https://api.electiondata.dev/v1/senate-results
         version_policy: resolve metadata, pin download URL, store SHA-256
         license: CC0-1.0
+      - name: state_precinct_returns_2024
+        doi: 10.7910/DVN/DODOBJ
+        geography: precinct
+        office: [governor, state_house, state_senate]
+        delivery: https://github.com/MEDSL/2024-elections-official/tree/main/individual_states
+        version_policy: pin MEDSL Git commit; verify every archive against Git blob SHA-1 and store SHA-256
+        license: CC0-1.0
     planned:
       - name: us_house_precinct_returns_2024
         geography: precinct
@@ -34,9 +41,6 @@ sources:
       - name: us_president_precinct_returns_2024
         geography: precinct
         office: president
-      - name: state_precinct_returns_2024
-        geography: precinct
-        office: [governor, state_house, state_senate]
     note: Remaining planned sources require schema-specific adapters and contest identity before ingestion.
   fec:
     publisher: Federal Election Commission
