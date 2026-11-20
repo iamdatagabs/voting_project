@@ -250,7 +250,15 @@ def main() -> None:
     aggregated["source_url"] = SOURCE_URL
     aggregated["source_published_at"] = commit_sha
     aggregated["extracted_at"] = stamp
-    silver = pd.DataFrame(validate_records(aggregated.to_dict("records")))
+    # Pandas represents nullable group keys (e.g. nonpartisan party and
+    # statewide district) as NaN. Pydantic expects actual None for optional
+    # string fields, so normalize scalar missing values before validation.
+    aggregated_records = aggregated.to_dict("records")
+    for record in aggregated_records:
+        for field, value in record.items():
+            if pd.isna(value):
+                record[field] = None
+    silver = pd.DataFrame(validate_records(aggregated_records))
 
     DATA_DIR.joinpath("bronze").mkdir(parents=True, exist_ok=True)
     DATA_DIR.joinpath("silver").mkdir(parents=True, exist_ok=True)
