@@ -9,6 +9,8 @@ on:
       - "scripts/ingest_mit_countypres.py"
       - "scripts/ingest_mit_house.py"
       - "scripts/ingest_mit_senate.py"
+      - "config/sources.yml"
+      - "scripts/ingest_mit_senate.py"
       - ".github/workflows/data-refresh.yml"
 permissions:
   contents: write
