@@ -94,10 +94,13 @@ def main():
     bronze_frame = pd.DataFrame(bronze)
     missing_vote_rows = int(bronze_frame["votes"].isna().sum())
     usable = bronze_frame[bronze_frame["votes"].notna()].copy()
-    usable["votes"] = usable["votes"].map(int)
-    usable["total_votes"] = usable["total_votes"].map(lambda value: int(value) if pd.notna(value) else None)
-    usable["party"] = usable["party"].map(lambda value: None if pd.isna(value) else str(value))
-    records = validate_records(usable.to_dict("records"))
+    normalized = []
+    for item in usable.to_dict("records"):
+        normalized.append({
+            key: None if pd.isna(value) else (int(value) if key in {"votes", "total_votes"} else value)
+            for key, value in item.items()
+        })
+    records = validate_records(normalized)
     silver = pd.DataFrame(records)
 
     bronze_path = DATA_DIR / "bronze" / "mit_us_house_1976_2024.parquet"
