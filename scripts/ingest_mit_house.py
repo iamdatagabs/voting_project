@@ -86,7 +86,7 @@ def main():
             "total_votes": total_votes,
             "result_status": "preliminary" if str(row["unofficial"]).lower() == "true" else "historical_final",
             "source_id": DATASET_ID,
-            "source_url": DOI,
+            "source_url": url,
             "source_published_at": row["version"],
             "extracted_at": stamp,
         })
