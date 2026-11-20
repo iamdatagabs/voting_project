@@ -138,7 +138,7 @@ def main() -> None:
     frame["election_type"] = "general"
     frame["office"] = "president"
     frame["geography_type"] = frame["county_fips"].map(
-        lambda value: "county" if value else "other_reporting_unit"
+        lambda value: "county" if pd.notna(value) and str(value).strip() else "other_reporting_unit"
     )
     frame["geography_name"] = frame["county_name"]
     frame["state_fips"] = pd.NA
