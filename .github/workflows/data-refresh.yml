@@ -8,6 +8,7 @@ on:
     paths:
       - "scripts/ingest_mit_countypres.py"
       - "scripts/ingest_mit_house.py"
+      - "scripts/ingest_mit_senate.py"
       - ".github/workflows/data-refresh.yml"
 permissions:
   contents: write
@@ -30,6 +31,8 @@ jobs:
         run: python scripts/ingest_mit_countypres.py
       - name: Download and validate House district returns
         run: PYTHONPATH=src python scripts/ingest_mit_house.py
+      - name: Download and validate Senate statewide returns
+        run: PYTHONPATH=src python scripts/ingest_mit_senate.py
       - name: Validate generated public datasets
         run: |
           python - <<'PY'
@@ -37,13 +40,18 @@ jobs:
           from pathlib import Path
           president = json.loads(Path("apps/web/data/presidential-timeseries.json").read_text())
           house = json.loads(Path("apps/web/data/house-timeseries.json").read_text())
+          senate = json.loads(Path("apps/web/data/senate-timeseries.json").read_text())
           assert president["metadata"]["rows_silver"] > 0
           assert len(president["national"]) > 0
           assert house["metadata"]["silver_rows"] > 0
           assert len(house["states"]) > 0
           assert house["metadata"]["source_validation"] == "pass"
+          assert senate["metadata"]["silver_rows"] > 0
+          assert len(senate["states"]) > 0
+          assert senate["metadata"]["source_validation"] == "pass"
           print("President:", president["metadata"]["rows_silver"], "rows")
           print("House:", house["metadata"]["silver_rows"], "rows;", house["metadata"]["contests"], "contests")
+          print("Senate:", senate["metadata"]["silver_rows"], "rows;", senate["metadata"]["contests"], "contests")
           PY
       - name: Preserve Raw, Bronze, Silver and manifests
         uses: actions/upload-artifact@v4
@@ -61,7 +69,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main
           git reset --mixed origin/main
-          git add apps/web/data/presidential-timeseries.json apps/web/data/house-timeseries.json
+          git add apps/web/data/presidential-timeseries.json apps/web/data/house-timeseries.json apps/web/data/senate-timeseries.json
           if ! git diff --cached --quiet; then
             git commit -m "data: refresh MIT election time series"
             git push origin HEAD:main
