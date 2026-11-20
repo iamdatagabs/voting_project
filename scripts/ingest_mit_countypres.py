@@ -7,8 +7,10 @@ Silver Parquet and a compact static time-series payload for GitHub Pages.
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import re
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -21,7 +23,7 @@ PUBLIC = ROOT / "apps" / "web" / "data"
 DOI = "doi:10.7910/DVN/VOQCHQ"
 SOURCE_ID = "mit_election_lab.county_president"
 METADATA_URL = "https://dataverse.harvard.edu/api/datasets/:persistentId/"
-ACCESS_URL = "https://dataverse.harvard.edu/api/access/datafile/{file_id}"
+DATASET_ACCESS_URL = "https://dataverse.harvard.edu/api/access/dataset/:persistentId/"
 
 
 def sha256(path: Path) -> str:
@@ -65,9 +67,19 @@ def main() -> None:
         file_id = source_file["id"]
         checksum = source_file.get("checksum") or {}\n        expected_md5 = source_file.get("md5") or checksum.get("value")
         raw_path = raw_dir / source_file["filename"]
-        download = client.get(ACCESS_URL.format(file_id=file_id))
+        # Download the version-resolved dataset bundle through Dataverse's
+        # documented dataset-level access endpoint.
+        download = client.get(DATASET_ACCESS_URL, params={"persistentId": DOI})
         download.raise_for_status()
-        raw_path.write_bytes(download.content)
+        with zipfile.ZipFile(io.BytesIO(download.content)) as archive:
+            matches = [name for name in archive.namelist()
+                       if name.rsplit("/", 1)[-1] == source_file["filename"]]
+            if not matches:
+                raise RuntimeError(
+                    "Dataverse bundle did not contain " + source_file["filename"]
+                    + "; available files: " + str(archive.namelist())
+                )
+            raw_path.write_bytes(archive.read(matches[0]))
 
     import hashlib as _hashlib
     actual_md5 = _hashlib.md5(raw_path.read_bytes()).hexdigest()  # noqa: S324 - publisher checksum
