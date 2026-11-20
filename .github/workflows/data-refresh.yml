@@ -34,7 +34,7 @@ jobs:
           from pathlib import Path
           p = Path("apps/web/data/presidential-timeseries.json")
           data = json.loads(p.read_text())
-          assert data["metadata"]["rows_source"] > 0
+          assert data["metadata"]["rows_silver"] > 0
           assert len(data["national"]) > 0
           assert len(data["metadata"]["years"]) >= 6
           print("Validated", data["metadata"]["rows_source"], "rows")
