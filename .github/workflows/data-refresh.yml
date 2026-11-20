@@ -37,7 +37,7 @@ jobs:
           assert data["metadata"]["rows_silver"] > 0
           assert len(data["national"]) > 0
           assert len(data["metadata"]["years"]) >= 6
-          print("Validated", data["metadata"]["rows_source"], "rows")
+          print("Validated", data["metadata"]["rows_silver"], "rows")
           PY
       - name: Preserve Raw, Bronze, Silver and manifest artifacts
         uses: actions/upload-artifact@v4
