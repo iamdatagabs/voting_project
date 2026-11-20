@@ -73,3 +73,38 @@ function renderSeries() {
 async function loadHistory(){try{const response=await fetch("data/presidential-timeseries.json");if(!response.ok)throw Error("Dataset histórico ainda não publicado");historyData=await response.json();const states=[...new Set(historyData.states.map(x=>x.state_po))].sort();$("series-state").innerHTML='<option value="US">Estados Unidos</option>'+states.map(s=>'<option value="'+s+'">'+s+"</option>").join("");$("series-source").textContent="MIT Election Lab · V"+historyData.metadata.dataset_version;$("connection").textContent="Série histórica verificada · "+historyData.metadata.years[0]+"–"+historyData.metadata.years.at(-1);$("records").textContent=fmt.format(historyData.metadata.rows_silver);$("years").textContent=historyData.metadata.years.join(", ");$("offices").textContent="1 · Presidência";$("certified").textContent="Fonte histórica";renderSeries()}catch(e){$("connection").textContent="Série histórica não publicada";$("timeseries-chart").innerHTML='<text x="450" y="170" text-anchor="middle" class="chart-empty">Execute o workflow Refresh electoral datasets para publicar os dados.</text>';console.error(e)}}
 async function results(){if(!API)return;try{const p=new URLSearchParams();if($("year").value)p.set("year",$("year").value);if($("office").value)p.set("office",$("office").value);const d=await request("/v1/results?"+p);$("result-count").textContent=fmt.format(d.items.length)+" observações";$("results").innerHTML=d.items.length?d.items.map(r=>'<tr><td>'+r.election_year+"</td><td>"+(names[r.office]||r.office)+"</td><td>"+r.geography_name+"</td><td>"+r.candidate+"</td><td>"+(r.party||"—")+"</td><td>"+fmt.format(r.votes)+"</td><td>"+statusLabel(r.result_status)+"</td></tr>").join(""):'<tr><td colspan="7" class="empty">Nenhum resultado para os filtros.</td></tr>'}catch(e){$("results").innerHTML='<tr><td colspan="7" class="empty">Falha ao consultar resultados. Verifique API e CORS.</td></tr>'}}
 $("refresh").addEventListener("click",()=>{loadHistory();if(API)results()});$("series-state").addEventListener("change",renderSeries);$("series-metric").addEventListener("change",renderSeries);$("year").addEventListener("change",results);$("office").addEventListener("change",results);loadHistory();if(API)results();else $("result-count").textContent="API não configurada · série histórica estática";
+
+// House returns are a separate dataset and are not mixed with presidential contests.
+let houseData = null;
+function renderHouse() {
+ if (!houseData) return;
+ const year = Number($("house-year").value);
+ const state = $("house-state").value;
+ const rows = houseData.states
+  .filter(row => Number(row.election_year) === year && row.state_po === state)
+  .sort((a,b) => Number(b.votes) - Number(a.votes));
+ $("house-results").innerHTML = rows.length
+  ? rows.map(row => '<tr><td>' + row.party + '</td><td>' + fmt.format(Number(row.votes)) + '</td><td>' + (Number(row.vote_share) * 100).toFixed(2) + '%</td></tr>').join("")
+  : '<tr><td colspan="3" class="empty">Sem observações para esta seleção.</td></tr>';
+ $("house-footnote").textContent = "Fonte: MIT Election Data and Science Lab · " + houseData.metadata.version + ". " + houseData.metadata.contests + " contests distritais no Silver; " + houseData.metadata.missing_candidate_votes_excluded + " linhas sem votos de candidato foram excluídas de Silver, sem imputação de zero. A tabela resume apenas eleições gerais regulares.";
+}
+async function loadHouse() {
+ try {
+  const response = await fetch("data/house-timeseries.json");
+  if (!response.ok) throw Error("Dataset House ainda não publicado");
+  houseData = await response.json();
+  const years = [...new Set(houseData.states.map(row => Number(row.election_year)))].sort((a,b) => b-a);
+  const states = [...new Map(houseData.states.map(row => [row.state_po, row.state])).entries()].sort((a,b) => a[1].localeCompare(b[1]));
+  $("house-year").innerHTML = years.map(year => '<option value="' + year + '">' + year + '</option>').join("");
+  $("house-state").innerHTML = states.map(([code,name]) => '<option value="' + code + '">' + name + ' (' + code + ')</option>').join("");
+  $("house-source").textContent = "MEDSL · " + houseData.metadata.version;
+  $("offices").textContent = "2 · Presidência e Câmara";
+  $("house-year").addEventListener("change", renderHouse);
+  $("house-state").addEventListener("change", renderHouse);
+  renderHouse();
+ } catch (error) {
+  $("house-results").innerHTML = '<tr><td colspan="3" class="empty">Dataset da Câmara indisponível. Execute Refresh electoral datasets.</td></tr>';
+  console.error(error);
+ }
+}
+loadHouse();
