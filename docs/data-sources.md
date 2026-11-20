@@ -38,7 +38,7 @@ O workflow também publica um artefato de execução com Raw, Bronze, Silver e m
 
 ## Limites de interpretação
 
-A primeira integração cobre somente a eleição presidencial e os retornos por county publicados na fonte. Ela não preenche automaticamente Senate, House, governadores ou legislativos estaduais. A cobertura adicional requer conectores específicos, identificação de contests, district crosswalks e validação independente. A fonte é um espelho versionado e atribuído ao MIT Election Data and Science Lab/Harvard Dataverse; a validação do espelho e o hash do download são registrados. O status `certified` representa a classificação do retorno histórico na fonte e não substitui consulta a certificados oficiais de cada jurisdição.
+A primeira integração cobre somente a eleição presidencial e os retornos por county publicados na fonte. Ela não preenche automaticamente Senate, House, governadores ou legislativos estaduais. A cobertura adicional requer conectores específicos, identificação de contests, district crosswalks e validação independente. A fonte é um espelho versionado e atribuído ao MIT Election Data and Science Lab/Harvard Dataverse; a validação do espelho e o hash do download são registrados. O status `historical_final` representa retornos históricos finais conforme publicados no dataset, sem afirmar que o pipeline verificou individualmente certificados oficiais de cada jurisdição.
 
 O arquivo bruto usado no pipeline é servido por uma API versionada de distribuição, com versão e validação expostas em metadados. O conteúdo é atribuído ao dataset original do MIT; o hash local registra a cópia efetivamente processada. A API de distribuição não é o publisher original.
 
