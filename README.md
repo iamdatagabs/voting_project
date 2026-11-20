@@ -69,3 +69,8 @@ O dashboard inclui um explorador de séries presidenciais 2000–2024, com sele�
 O workflow Refresh electoral datasets resolve a versão mais recente pelo DOI, preserva o arquivo bruto durante a execução, valida checksum MD5 do publisher e SHA-256 local, normaliza para Parquet e gera JSON agregado para o GitHub Pages. O denominador é deduplicado por county e ciclo antes da agregação. Ausências de votos não são imputadas como zero. A participação nos votos não deve ser interpretada como turnout da população elegível.
 
 A primeira integração cobre apenas Presidência. Senate, House, governadores e legislativos estaduais permanecem no escopo arquitetural e dependem de conectores e validações próprios; não serão apresentados como dados disponíveis antes da ingestão efetiva. Consulte [proveniência e transformações](docs/data-sources.md).
+
+
+## Publicação no GitHub Pages
+
+O workflow publica o conteúdo de `apps/web` pelo GitHub Actions e também é acionado após uma atualização de dados bem-sucedida. Na primeira publicação, o proprietário do repositório precisa habilitar Pages em **Settings → Pages → Build and deployment → Source: GitHub Actions**. A integração GitHub conectada ao ChatGPT não possui permissão administrativa para criar o site Pages; após habilitar, execute novamente o workflow **Publish dashboard**. O artefato de dados já é versionado em `apps/web/data/presidential-timeseries.json`.
