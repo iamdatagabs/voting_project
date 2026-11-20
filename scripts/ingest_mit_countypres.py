@@ -133,7 +133,7 @@ def main() -> None:
 
     frame["election_type"] = "general"
     frame["office"] = "president"
-    frame["geography_type"] = "county"
+    frame["geography_type"] = frame["county_fips"].map(\n        lambda value: "county" if value else "other_reporting_unit"\n    )
     frame["geography_name"] = frame["county_name"]
     frame["state_fips"] = pd.NA
     frame["district"] = pd.NA
