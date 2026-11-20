@@ -39,6 +39,17 @@ jobs:
           assert len(data["metadata"]["years"]) >= 6
           print("Validated", data["metadata"]["rows_source"], "rows")
           PY
+      - name: Preserve Raw, Bronze, Silver and manifest artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: electoral-data-${{ github.run_id }}
+          path: |
+            data/raw/mit_election_lab.county_president/**
+            data/bronze/mit_county_president_2000_2024.parquet
+            data/silver/mit_county_president_2000_2024.parquet
+            data/silver/mit_county_president_2000_2024.manifest.json
+          retention-days: 90
+          if-no-files-found: error
       - name: Commit refreshed public dashboard data
         run: |
           git config user.name "github-actions[bot]"
