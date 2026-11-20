@@ -18,7 +18,7 @@ permissions:
   actions: read
 concurrency:
   group: electoral-data-refresh
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   refresh:
     runs-on: ubuntu-latest
