@@ -217,3 +217,138 @@ async function loadStateOffices() {
  }
 }
 loadStateOffices();
+
+/* Interactive presidential state map. Geometry is loaded from US Atlas;
+   electoral values come exclusively from the versioned MIT county returns. */
+const stateFipsToPostal={
+ "01":"AL","02":"AK","04":"AZ","05":"AR","06":"CA","08":"CO","09":"CT","10":"DE","11":"DC","12":"FL","13":"GA",
+ "15":"HI","16":"ID","17":"IL","18":"IN","19":"IA","20":"KS","21":"KY","22":"LA","23":"ME","24":"MD","25":"MA",
+ "26":"MI","27":"MN","28":"MS","29":"MO","30":"MT","31":"NE","32":"NV","33":"NH","34":"NJ","35":"NM","36":"NY",
+ "37":"NC","38":"ND","39":"OH","40":"OK","41":"OR","42":"PA","44":"RI","45":"SC","46":"SD","47":"TN","48":"TX",
+ "49":"UT","50":"VT","51":"VA","53":"WA","54":"WV","55":"WI","56":"WY"
+};
+const postalToStateName={
+ AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",CT:"Connecticut",DE:"Delaware",DC:"District of Columbia",
+ FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",
+ ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",
+ NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",OH:"Ohio",
+ OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",
+ UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming"
+};
+let electionTopology=null,selectedMapState=null,mapDataByState=new Map();
+const mapNumber=value=>fmt.format(Math.round(Number(value)||0));
+function electionStateMetrics(year){
+ const byState=new Map();
+ for(const row of (historyData?.states||[])){
+  if(Number(row.election_year)!==Number(year))continue;
+  if(!byState.has(row.state_po))byState.set(row.state_po,{dem:0,rep:0,total:Number(row.total_votes)||0});
+  const item=byState.get(row.state_po);
+  if(row.party==="DEMOCRAT")item.dem=Number(row.votes)||0;
+  if(row.party==="REPUBLICAN")item.rep=Number(row.votes)||0;
+  item.total=Math.max(item.total,Number(row.total_votes)||0);
+ }
+ for(const item of byState.values()){
+  item.demShare=item.total?item.dem/item.total*100:null;
+  item.repShare=item.total?item.rep/item.total*100:null;
+  item.margin=item.total?(item.dem-item.rep)/item.total*100:null;
+  item.winner=item.dem>item.rep?"DEMOCRAT":item.rep>item.dem?"REPUBLICAN":"TIE";
+ }
+ return byState;
+}
+function marginColor(margin){
+ if(!Number.isFinite(margin))return "#34445a";
+ const t=Math.min(1,Math.abs(margin)/45);
+ const neutral=[116,128,145],dem=[43,112,205],rep=[197,72,78],target=margin>=0?dem:rep;
+ const rgb=neutral.map((v,i)=>Math.round(v+(target[i]-v)*t));
+ return "rgb("+rgb.join(",")+")";
+}
+function mapStateSelect(postal){
+ const select=$("series-state");
+ if(select && [...select.options].some(option=>option.value===postal)){
+  select.value=postal;renderSeries();
+ }
+ for(const id of ["house-state","senate-state","state-office-state"]){
+  const el=$(id);if(el && [...el.options].some(option=>option.value===postal)){
+   el.value=postal;
+   if(id==="house-state")renderHouse();
+   if(id==="senate-state")renderSenate();
+   if(id==="state-office-state"){updateStateOfficeDistricts();renderStateOffices();}
+  }
+ }
+}
+function updateMapDetail(postal,metrics,year){
+ const name=postalToStateName[postal]||postal;
+ $("map-state-name").textContent=name;
+ if(!metrics){$("map-state-margin").textContent="Sem observações para este ciclo";$("map-dem-share").textContent="—";$("map-rep-share").textContent="—";$("map-total-votes").textContent="—";return;}
+ const margin=metrics.margin;
+ $("map-state-margin").textContent=(margin>0?"+":"")+margin.toFixed(2)+" p.p. · "+(metrics.winner==="TIE"?"Empate":metrics.winner==="DEMOCRAT"?"Democrata":"Republicano");
+ $("map-dem-share").textContent=metrics.demShare.toFixed(2)+"%";
+ $("map-rep-share").textContent=metrics.repShare.toFixed(2)+"%";
+ $("map-total-votes").textContent=mapNumber(metrics.total);
+ $("map-detail-note").textContent="Resultado presidencial de "+year+". Clique em outro estado para comparar; a seleção também atualiza a série temporal quando há cobertura.";
+}
+function renderElectionMap(){
+ if(!historyData||!electionTopology||!window.d3||!window.topojson)return;
+ const year=Number($("map-year").value||2024),metric=$("map-metric").value;
+ mapDataByState=electionStateMetrics(year);
+ const svg=document.querySelector("#election-map"),width=960,height=600;
+ const collection=topojson.feature(electionTopology,electionTopology.objects.states);
+ const projection=d3.geoAlbersUsa().fitSize([width-30,height-24],collection);
+ const path=d3.geoPath(projection);
+ svg.innerHTML="";
+ const features=collection.features.filter(feature=>stateFipsToPostal[String(feature.id).padStart(2,"0")]);
+ const group=d3.select(svg).append("g").attr("class","state-layer");
+ group.selectAll("path").data(features).join("path")
+  .attr("class","map-state")
+  .attr("d",path)
+  .attr("tabindex",0)
+  .attr("role","button")
+  .attr("aria-label",feature=>{
+   const postal=stateFipsToPostal[String(feature.id).padStart(2,"0")],m=mapDataByState.get(postal);
+   return postalToStateName[postal]+(m?", margem "+m.margin.toFixed(2)+" pontos percentuais":" sem dados");
+  })
+  .attr("fill",feature=>{
+   const postal=stateFipsToPostal[String(feature.id).padStart(2,"0")],m=mapDataByState.get(postal);
+   if(!m)return "#34445a";
+   if(metric==="winner")return m.winner==="DEMOCRAT"?"#397fc9":m.winner==="REPUBLICAN"?"#c6535b":"#9a9a9a";
+   return marginColor(m.margin);
+  })
+  .classed("is-selected",feature=>stateFipsToPostal[String(feature.id).padStart(2,"0")]===selectedMapState)
+  .on("mouseenter focus",function(event,feature){
+   const postal=stateFipsToPostal[String(feature.id).padStart(2,"0")],m=mapDataByState.get(postal);
+   $("map-tooltip").textContent=postalToStateName[postal]+(m?" · "+(m.margin>0?"+":"")+m.margin.toFixed(2)+" p.p.":" · sem dados");
+   $("map-tooltip").classList.add("visible");
+  })
+  .on("mouseleave blur",()=>$("map-tooltip").classList.remove("visible"))
+  .on("click keydown",function(event,feature){
+   if(event.type==="keydown" && event.key!=="Enter" && event.key!==" ")return;
+   if(event.type==="keydown")event.preventDefault();
+   const postal=stateFipsToPostal[String(feature.id).padStart(2,"0")];
+   if(!postal)return;
+   selectedMapState=postal;
+   updateMapDetail(postal,mapDataByState.get(postal),year);
+   mapStateSelect(postal);
+   d3.select(svg).selectAll(".map-state").classed("is-selected",f=>stateFipsToPostal[String(f.id).padStart(2,"0")]===postal);
+  })
+  .append("title").text(feature=>{
+   const postal=stateFipsToPostal[String(feature.id).padStart(2,"0")],m=mapDataByState.get(postal);
+   return postalToStateName[postal]+(m?" · "+m.margin.toFixed(2)+" p.p.":" · sem dados");
+  });
+ $("map-source").textContent="MIT Election Lab · "+year;
+ $("map-footnote").textContent="Fonte: MIT Election Data and Science Lab, County Presidential Election Returns 2000–2024. "+(metric==="margin"?"Margem = (votos Democratas − votos Republicanos) / total de votos reportados × 100.":"A cor indica o partido com mais votos entre Democratas e Republicanos.")+" Total de votos reportados não equivale ao eleitorado elegível.";
+ if(selectedMapState)updateMapDetail(selectedMapState,mapDataByState.get(selectedMapState),year);
+}
+async function initElectionMap(){
+ try{
+  const response=await fetch("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json");
+  if(!response.ok)throw Error("Falha ao carregar geometria dos estados");
+  electionTopology=await response.json();
+  renderElectionMap();
+  $("map-year").addEventListener("change",renderElectionMap);
+  $("map-metric").addEventListener("change",renderElectionMap);
+ }catch(error){
+  $("election-map").innerHTML='<text x="480" y="300" text-anchor="middle" class="chart-empty">Não foi possível carregar a geometria cartográfica. Verifique a conexão e recarregue.</text>';
+  console.error(error);
+ }
+}
+initElectionMap();
