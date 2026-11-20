@@ -134,7 +134,7 @@ async function loadSenate() {
   const states = [...new Map(senateData.states.map(row => [row.state_po, row.state])).entries()].sort((a,b) => a[1].localeCompare(b[1]));
   $("senate-year").innerHTML = years.map(year => '<option value="' + year + '">' + year + '</option>').join("");
   $("senate-state").innerHTML = states.map(([code,name]) => '<option value="' + code + '">' + name + ' (' + code + ')</option>').join("");
-  $("senate-source").textContent = "MEDSL · " + senateData.metadata.version;
+  $("senate-source").textContent = "MEDSL · " + senateData.metadata.version + " · " + fmt.format(senateData.metadata.silver_rows) + " registros";
   $("offices").textContent = "3 · Presidência, Senado e Câmara";
   $("senate-year").addEventListener("change", renderSenate);
   $("senate-state").addEventListener("change", renderSenate);
