@@ -9,6 +9,7 @@ on:
       - "scripts/ingest_mit_countypres.py"
       - "scripts/ingest_mit_house.py"
       - "scripts/ingest_mit_senate.py"
+      - "scripts/ingest_mit_state_offices.py"
       - "config/sources.yml"
       - "scripts/ingest_mit_senate.py"
       - ".github/workflows/data-refresh.yml"
@@ -21,7 +22,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -35,6 +36,8 @@ jobs:
         run: PYTHONPATH=src python scripts/ingest_mit_house.py
       - name: Download and validate Senate statewide returns
         run: PYTHONPATH=src python scripts/ingest_mit_senate.py
+      - name: Download and validate governor and state legislative returns
+        run: PYTHONPATH=src python scripts/ingest_mit_state_offices.py
       - name: Validate generated public datasets
         run: |
           python - <<'PY'
@@ -43,6 +46,7 @@ jobs:
           president = json.loads(Path("apps/web/data/presidential-timeseries.json").read_text())
           house = json.loads(Path("apps/web/data/house-timeseries.json").read_text())
           senate = json.loads(Path("apps/web/data/senate-timeseries.json").read_text())
+          state_offices = json.loads(Path("apps/web/data/state-offices-2024.json").read_text())
           assert president["metadata"]["rows_silver"] > 0
           assert len(president["national"]) > 0
           assert house["metadata"]["silver_rows"] > 0
@@ -51,9 +55,14 @@ jobs:
           assert senate["metadata"]["silver_rows"] > 0
           assert len(senate["states"]) > 0
           assert senate["metadata"]["source_validation"] == "pass"
+          assert state_offices["metadata"]["silver_rows"] > 0
+          assert len(state_offices["results"]) > 0
+          assert state_offices["metadata"]["archive_count"] == 51
+          assert state_offices["metadata"]["source_validation"] == "git_blob_sha1_verified"
           print("President:", president["metadata"]["rows_silver"], "rows")
           print("House:", house["metadata"]["silver_rows"], "rows;", house["metadata"]["contests"], "contests")
           print("Senate:", senate["metadata"]["silver_rows"], "rows;", senate["metadata"]["contests"], "contests")
+          print("State offices:", state_offices["metadata"]["silver_rows"], "rows;", state_offices["metadata"]["contests"], "contests;", state_offices["metadata"]["offices"])
           PY
       - name: Preserve Raw, Bronze, Silver and manifests
         uses: actions/upload-artifact@v4
@@ -71,7 +80,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main
           git reset --mixed origin/main
-          git add apps/web/data/presidential-timeseries.json apps/web/data/house-timeseries.json apps/web/data/senate-timeseries.json
+          git add apps/web/data/presidential-timeseries.json apps/web/data/house-timeseries.json apps/web/data/senate-timeseries.json apps/web/data/state-offices-2024.json
           if ! git diff --cached --quiet; then
             git commit -m "data: refresh MIT election time series"
             git push origin HEAD:main
