@@ -4,7 +4,7 @@ const API=(window.ELECTORAL_API||"").replace(/\/$/,""),$=id=>document.getElement
 const names={president:"Presidência",senate:"Senado",house:"Câmara",governor:"Governador",state_house:"State House",state_senate:"State Senate"};
 const palette={DEMOCRAT:"#70a7ff",REPUBLICAN:"#ff7777",LIBERTARIAN:"#e5c46a",GREEN:"#70d6a3",OTHER:"#b6a2d9"};let historyData=null;
 async function request(path){const r=await fetch(API+path);if(!r.ok)throw Error("API "+r.status);return r.json()}
-const statusLabel=s=>({certified:"Certificado",preliminary:"Preliminar",estimated:"Estimado"})[s]||s;
+const statusLabel=s=>({certified:"Certificado",preliminary:"Preliminar",estimated:"Estimado",historical_final:"Histórico final"})[s]||s;
 function renderSeries() {
  if (!historyData) return;
  const state = $("series-state").value;
