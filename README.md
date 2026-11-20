@@ -23,7 +23,7 @@ Fontes públicas → Raw (bytes + SHA-256) → Bronze (normalizado) → Silver (
 | Estadual executivo | Governador | estado |
 | Estadual legislativo | State House / State Senate | distrito estadual |
 
-O domínio também admite eleições especiais e ciclos não coincidentes.
+O domínio também admite eleições especiais e ciclos não coincidentes. O campo `contest_id` identifica ano, cargo, território e atributos da disputa; `source_row_id` preserva a linha da fonte quando necessário.
 
 ## Início rápido
 Python 3.11+:
@@ -74,3 +74,12 @@ A primeira integração cobre apenas Presidência. Senate, House, governadores e
 ## Publicação no GitHub Pages
 
 O workflow publica o conteúdo de `apps/web` pelo GitHub Actions e também é acionado após uma atualização de dados bem-sucedida. Na primeira publicação, o proprietário do repositório precisa habilitar Pages em **Settings → Pages → Build and deployment → Source: GitHub Actions**. A integração GitHub conectada ao ChatGPT não possui permissão administrativa para criar o site Pages; após habilitar, execute novamente o workflow **Publish dashboard**. O artefato de dados já é versionado em `apps/web/data/presidential-timeseries.json`.
+
+
+## Dados efetivamente integrados
+
+- **Presidência (2000–2024):** retornos por county, 7 ciclos eleitorais.
+- **Câmara dos Representantes (1976–2024):** retornos por distrito congressional, incluindo eleições especiais no Silver. O agregado público de voto popular estadual usa somente eleições gerais regulares.
+- **Senado, governadores e legislativos estaduais:** ainda planejados; não são apresentados como séries integradas.
+
+A integração House usa o dataset MEDSL, DOI [10.7910/DVN/IG0UN2](https://doi.org/10.7910/DVN/IG0UN2), CC0 1.0. O pipeline fixa a versão do espelho, valida atribuição/licença, calcula SHA-256 e preserva Raw/Bronze/Silver e manifesto como artefatos de Actions. O modelo canônico identifica cada disputa por `contest_id`, evitando colidir eleições regulares, especiais, primárias e runoffs no mesmo distrito. Consulte [proveniência House](docs/data-sources.md).
