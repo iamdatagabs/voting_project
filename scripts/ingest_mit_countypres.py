@@ -48,8 +48,10 @@ def clean_fips(value: object) -> str | None:
 def main() -> None:
     extracted_at = datetime.now(timezone.utc).isoformat()
     raw_dir = DATA / "raw" / SOURCE_ID
+    bronze_dir = DATA / "bronze"
     silver_dir = DATA / "silver"
     raw_dir.mkdir(parents=True, exist_ok=True)
+    bronze_dir.mkdir(parents=True, exist_ok=True)
     silver_dir.mkdir(parents=True, exist_ok=True)
     PUBLIC.mkdir(parents=True, exist_ok=True)
 
@@ -120,6 +122,8 @@ def main() -> None:
     if (denominator_counts > 1).any():
         raise RuntimeError("Inconsistent total_votes within a county-election group")
 
+    bronze_path = bronze_dir / "mit_county_president_2000_2024.parquet"
+    frame.to_parquet(bronze_path, index=False, compression="zstd")
     omitted_missing_votes = int(frame["votes"].isna().sum())
     omitted_missing_totals = int(frame["total_votes"].isna().sum())
     frame = frame.loc[frame["votes"].notna() & frame["total_votes"].notna()].copy()
@@ -216,6 +220,7 @@ def main() -> None:
     manifest = {
         **payload["metadata"],
         "raw_file": str(raw_path.relative_to(ROOT)),
+        "bronze_file": str(bronze_path.relative_to(ROOT)),
         "silver_file": str(parquet_path.relative_to(ROOT)),
         "dashboard_file": str(output.relative_to(ROOT)),
         "rows_silver": int(len(canonical)),
