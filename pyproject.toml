@@ -18,5 +18,6 @@ testpaths = ["tests"]
 addopts = "-q"
 [tool.ruff]
 line-length = 100
-ignore = ["E701", "E702", "E704"]
+[tool.ruff.lint]
+ignore = ["E701", "E702"]
 target-version = "py311"
