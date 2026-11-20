@@ -17,6 +17,9 @@ sources:
         delivery: https://api.electiondata.dev/v1/house-results
         version_policy: resolve metadata, pin download URL, store SHA-256
         license: CC0-1.0
+        delivery: https://api.electiondata.dev/v1/senate-results
+        version_policy: resolve metadata, pin download URL, store SHA-256
+        license: CC0-1.0
     planned:
       - name: us_senate_statewide_1976_2024
         doi: 10.7910/DVN/PEJ5QU
