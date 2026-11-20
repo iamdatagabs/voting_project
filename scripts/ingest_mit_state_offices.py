@@ -9,6 +9,7 @@ import hashlib
 import io
 import json
 import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -119,8 +120,8 @@ def main() -> None:
             raise RuntimeError(f"Expected 51 state/DC archives, found {len(archives)}")
 
         RAW_DIR.mkdir(parents=True, exist_ok=True)
-        tables, source_files = [], []
-        for item in archives:
+
+        def download_archive(item):
             url = (
                 f"https://raw.githubusercontent.com/MEDSL/2024-elections-official/"
                 f"{commit_sha}/{item['path']}"
@@ -132,8 +133,16 @@ def main() -> None:
             if actual_blob_sha != item["sha"]:
                 raise RuntimeError(f"Git blob checksum mismatch for {item['name']}")
             local_sha = hashlib.sha256(payload).hexdigest()
-            raw_path = RAW_DIR / f"{item['name']}"
+            raw_path = RAW_DIR / item["name"]
             raw_path.write_bytes(payload)
+            return item, payload, actual_blob_sha, local_sha, raw_path
+
+        # Parallelize network I/O; keep parsing sequential and deterministic.
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            downloads = list(pool.map(download_archive, archives))
+
+        tables, source_files = [], []
+        for index, (item, payload, actual_blob_sha, local_sha, raw_path) in enumerate(downloads, 1):
             frame = archive_csv(payload, item["name"])
             if not frame.empty:
                 frame["archive_name"] = item["name"]
@@ -144,6 +153,13 @@ def main() -> None:
                 "git_blob_sha1": actual_blob_sha, "download_sha256": local_sha,
                 "raw_path": str(raw_path),
             })
+            print(
+                f"[{index}/{len(archives)}] {item['name']}: "
+                f"{len(frame):,} target-office rows parsed; "
+                f"{len(payload):,} compressed bytes verified",
+                flush=True,
+            )
+        print("All 51 state/DC archives downloaded and parsed.", flush=True)
 
     if not tables:
         raise RuntimeError("No state-office observations found in MEDSL archives.")
