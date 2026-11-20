@@ -108,3 +108,40 @@ async function loadHouse() {
  }
 }
 loadHouse();
+
+
+// Senate statewide returns: regular general elections are aggregated separately
+// from special elections and runoffs; the source's TOTAL mode avoids double-counting.
+let senateData = null;
+function renderSenate() {
+ if (!senateData) return;
+ const year = Number($("senate-year").value);
+ const state = $("senate-state").value;
+ const rows = senateData.states
+  .filter(row => Number(row.election_year) === year && row.state_po === state)
+  .sort((a,b) => Number(b.votes) - Number(a.votes));
+ $("senate-results").innerHTML = rows.length
+  ? rows.map(row => '<tr><td>' + row.party + '</td><td>' + fmt.format(Number(row.votes)) + '</td><td>' + (Number(row.vote_share) * 100).toFixed(2) + '%</td></tr>').join("")
+  : '<tr><td colspan="3" class="empty">Sem observações para esta seleção.</td></tr>';
+ $("senate-footnote").textContent = "Fonte: MIT Election Data and Science Lab · " + senateData.metadata.version + ". " + senateData.metadata.contests + " contests no Silver; " + senateData.metadata.missing_candidate_votes_excluded + " linhas sem votos foram excluídas. O painel agrega apenas eleições gerais regulares e usa as linhas TOTAL para evitar dupla contagem de modos de votação.";
+}
+async function loadSenate() {
+ try {
+  const response = await fetch("data/senate-timeseries.json");
+  if (!response.ok) throw Error("Dataset Senate ainda não publicado");
+  senateData = await response.json();
+  const years = [...new Set(senateData.states.map(row => Number(row.election_year)))].sort((a,b) => b-a);
+  const states = [...new Map(senateData.states.map(row => [row.state_po, row.state])).entries()].sort((a,b) => a[1].localeCompare(b[1]));
+  $("senate-year").innerHTML = years.map(year => '<option value="' + year + '">' + year + '</option>').join("");
+  $("senate-state").innerHTML = states.map(([code,name]) => '<option value="' + code + '">' + name + ' (' + code + ')</option>').join("");
+  $("senate-source").textContent = "MEDSL · " + senateData.metadata.version;
+  $("offices").textContent = "3 · Presidência, Senado e Câmara";
+  $("senate-year").addEventListener("change", renderSenate);
+  $("senate-state").addEventListener("change", renderSenate);
+  renderSenate();
+ } catch (error) {
+  $("senate-results").innerHTML = '<tr><td colspan="3" class="empty">Dataset do Senado indisponível. Execute Refresh electoral datasets.</td></tr>';
+  console.error(error);
+ }
+}
+loadSenate();
