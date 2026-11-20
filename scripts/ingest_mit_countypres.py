@@ -197,7 +197,7 @@ def main() -> None:
             "mirror_validation": source_metadata.get("validation", {}).get("status"),
             "mirror_published_at": source_metadata.get("published_at"),
             "mirror_url": download_url,
-            "publisher_raw_sha256": publisher_sha256,
+            "upstream_source_sha256": publisher_sha256,
             "download_sha256": source_sha256,
             "extracted_at": extracted_at,
             "rows_source": int(len(frame)),
