@@ -16,6 +16,12 @@ DATASET_ID = "mit_election_lab.us_senate_statewide_1976_2024"
 DOI = "10.7910/DVN/PEJ5QU"
 
 
+def as_text(value, fallback=""):
+    if value is None or pd.isna(value):
+        return fallback
+    return str(value).strip()
+
+
 def as_int(value):
     if value is None or pd.isna(value) or str(value).strip() in {"", "—", "NA"}:
         return None
@@ -67,13 +73,15 @@ def main():
     bronze = []
     for row in totals.to_dict("records"):
         year = int(row["year"])
-        state_po = row["state_po"].strip()
-        stage = row["stage"].strip().upper()
+        state_po = as_text(row["state_po"])
+        stage = as_text(row["stage"]).upper()
         special = str(row["special"]).strip().lower() in {"true", "yes", "1"}
         contest_id = f"US-SENATE-{year}-{state_po}-{stage}-S{int(special)}"
         votes = as_int(row["candidatevotes"])
         total_votes = as_int(row["totalvotes"])
-        party = row["party_simplified"]
+        party = as_text(row["party_simplified"], None)
+        candidate = as_text(row["candidate"], "Unlisted candidate")
+        state_name = as_text(row["state"], state_po)
         bronze.append({
             "election_year": year,
             "election_type": "general" if stage == "GEN" else stage.lower(),
@@ -82,11 +90,11 @@ def main():
             "source_row_id": str(row["race_row"]),
             "geography_type": "state",
             "geography_id": state_po,
-            "geography_name": row["state"].title(),
+            "geography_name": state_name.title(),
             "state_fips": str(int(row["state_fips"])).zfill(2),
             "district": None,
-            "candidate": row["candidate"].strip(),
-            "party": None if pd.isna(party) or party.strip() in {"", "—"} else party.strip(),
+            "candidate": candidate,
+            "party": None if party in {None, "", "—"} else party,
             "votes": votes,
             "total_votes": total_votes,
             "result_status": "preliminary" if str(row["unofficial"]).lower() in {"true", "yes", "1"} else "historical_final",
