@@ -28,9 +28,9 @@ def leaders(year=None,office=None):
         if year is not None: clauses.append("election_year=?"); params.append(year)
         if office is not None: clauses.append("office=?"); params.append(office)
         where=" WHERE "+" AND ".join(clauses) if clauses else ""
-        df=con.execute(f"""SELECT election_year,office,geography_name,candidate,party,votes,result_status
+        df=con.execute(f"""SELECT election_year,office,contest_id,geography_name,candidate,party,votes,result_status
         FROM results{where} QUALIFY row_number() OVER
-        (PARTITION BY election_year,office,geography_id,district ORDER BY votes DESC)<=2
+        (PARTITION BY COALESCE(contest_id, CAST(election_year AS VARCHAR) || '-' || office || '-' || geography_id), candidate, party ORDER BY votes DESC)=1
         ORDER BY election_year DESC,office,geography_name,votes DESC LIMIT 500""",params).fetchdf()
         return df.to_dict("records")
     finally: con.close()
