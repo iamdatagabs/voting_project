@@ -61,3 +61,20 @@ MIT Election Data and Science Lab, 2018, "County Presidential Election Returns 2
 Citação recomendada: MIT Election Data and Science Lab, 2017, "U.S. House 1976–2024", https://doi.org/10.7910/DVN/IG0UN2, Harvard Dataverse, V15, UNF:6:cIJWG41N8qe3Kyf7oKuPdw== [fileUNF].
 
 **Limite de cobertura:** a integração House é distrital e não contém retornos precinct-level. O dataset também inclui eleições especiais; a série comparativa publicada seleciona somente eleições gerais regulares para reduzir dupla contagem e não deve ser confundida com a totalidade das disputas ocorridas em cada ano.
+
+
+## Terceira integração — U.S. Senate statewide 1976–2024
+
+- Dataset: MIT Election Data and Science Lab, *U.S. Senate statewide 1976–2024*.
+- DOI: 10.7910/DVN/PEJ5QU; Harvard Dataverse V8; licença CC0 1.0.
+- Cobertura: retornos estaduais de candidatos ao Senado entre 1976 e 2024, incluindo eleições especiais e runoffs; os dados contêm linhas por candidato e ballot line/modo.
+- O conector consulta metadados versionados, exige validação `pass`, confirma DOI e licença e fixa a versão no URL de download. O SHA-256 local identifica exatamente o arquivo processado.
+- Somente linhas `mode=TOTAL` são usadas para a tabela canônica. Somar linhas TOTAL junto com subtotais de modos de votação produziria dupla contagem. A execução falha explicitamente se a fonte deixar de fornecer linhas TOTAL.
+- `contest_id` incorpora ano, estado, etapa e indicador de eleição especial. Assim, a eleição regular, uma especial e eventual runoff não colidem. A etapa é preservada em `election_type`.
+- Linhas sem votos de candidato são preservadas em Bronze e excluídas de Silver, com contagem no manifesto; ausência nunca é convertida em zero. Linhas sinalizadas como `unofficial` são classificadas como `preliminary`; as demais como `historical_final`.
+- O explorador público agrega apenas disputas de eleição geral regulares (`stage=GEN`, não especiais). Especiais e runoffs continuam disponíveis nas camadas analíticas, mas não são somados ao comparativo estadual regular. O denominador `totalvotes` é contado uma vez por contest.
+- Artefatos: `data/raw/mit_election_lab.us_senate_statewide_1976_2024/`, `data/bronze/mit_us_senate_1976_2024.parquet`, `data/silver/mit_us_senate_1976_2024.parquet`, manifesto e `apps/web/data/senate-timeseries.json`.
+
+Citação recomendada: MIT Election Data and Science Lab, 2017, "U.S. Senate statewide 1976–2024", https://doi.org/10.7910/DVN/PEJ5QU, Harvard Dataverse, V8, UNF:6:jRgjMTzXKaB+psjQ9tTqMQ== [fileUNF].
+
+**Limite de interpretação:** participação nos votos reportados não equivale a turnout da população elegível. A integração não faz validação independente dos certificados oficiais de cada estado; `historical_final` reflete o status da base histórica de origem.
