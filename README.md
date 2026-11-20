@@ -68,7 +68,7 @@ O dashboard inclui um explorador de séries presidenciais 2000–2024, com sele�
 
 O workflow Refresh electoral datasets resolve a versão mais recente pelo DOI, preserva o arquivo bruto durante a execução, valida checksum MD5 do publisher e SHA-256 local, normaliza para Parquet e gera JSON agregado para o GitHub Pages. O denominador é deduplicado por county e ciclo antes da agregação. Ausências de votos não são imputadas como zero. A participação nos votos não deve ser interpretada como turnout da população elegível.
 
-As integrações atuais cobrem Presidência, House e Senate. Governadores e legislativos estaduais permanecem no escopo arquitetural e dependem de conectores e validações próprios; não serão apresentados como dados disponíveis antes da ingestão efetiva. Consulte [proveniência e transformações](docs/data-sources.md).
+As integrações atuais cobrem Presidência, House, Senate e eleições estaduais de 2024 para governadores, State House e State Senate, a partir de arquivos precinct-level por estado. A série estadual ainda não é uma série histórica multi-ciclo. Consulte [proveniência e transformações](docs/data-sources.md).
 
 
 ## Publicação no GitHub Pages
@@ -81,9 +81,12 @@ O workflow publica o conteúdo de `apps/web` pelo GitHub Actions e também é ac
 - **Presidência (2000–2024):** retornos por county, 7 ciclos eleitorais.
 - **Câmara dos Representantes (1976–2024):** retornos por distrito congressional, incluindo eleições especiais no Silver. O agregado público de voto popular estadual usa somente eleições gerais regulares.
 - **Senado (1976–2024):** retornos estaduais, incluindo eleições especiais e runoffs no Silver; o agregado público seleciona eleições gerais regulares.
-- **Governadores e legislativos estaduais:** ainda planejados; não são apresentados como séries integradas.
+- **Governadores, State House e State Senate (2024):** resultados precinct-level agregados por estado e distrito, com cobertura condicionada aos cargos efetivamente disputados e às observações publicadas.
 
 A integração House usa o dataset MEDSL, DOI [10.7910/DVN/IG0UN2](https://doi.org/10.7910/DVN/IG0UN2), CC0 1.0. O pipeline fixa a versão do espelho, valida atribuição/licença, calcula SHA-256 e preserva Raw/Bronze/Silver e manifesto como artefatos de Actions. O modelo canônico identifica cada disputa por `contest_id`, evitando colidir eleições regulares, especiais, primárias e runoffs no mesmo distrito. Consulte [proveniência House](docs/data-sources.md).
 
 
 A integração Senate usa o dataset MEDSL, DOI [10.7910/DVN/PEJ5QU](https://doi.org/10.7910/DVN/PEJ5QU), Harvard Dataverse V8, CC0 1.0. O conector utiliza exclusivamente as linhas `mode=TOTAL` para impedir que totais e subtotais por modo de votação sejam somados juntos. O `contest_id` distingue ano, estado, etapa e eleição especial; especiais e runoffs permanecem no Silver, mas não entram no agregado comparativo de eleições gerais regulares. Consulte [proveniência Senate](docs/data-sources.md).
+
+
+A integração estadual utiliza o dataset MIT MEDSL *State Precinct-Level Returns 2024* (DOI [10.7910/DVN/DODOBJ](https://doi.org/10.7910/DVN/DODOBJ)), CC0 1.0, distribuído em 51 arquivos ZIP (50 estados + DC) no repositório [MEDSL/2024-elections-official](https://github.com/MEDSL/2024-elections-official). O pipeline fixa o commit, valida cada ZIP pelo Git blob SHA-1, registra SHA-256 e agrega apenas linhas `mode=TOTAL`. Os resultados de governador são estaduais; os de State House e State Senate são distritais. A cobertura é específica de 2024 e depende de quais cargos foram disputados em cada estado.
