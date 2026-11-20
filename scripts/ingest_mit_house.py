@@ -119,6 +119,9 @@ def main():
         .sum(min_count=1)
     )
     aggregates = totals.merge(denominators, on=["election_year", "state_fips"], how="left")
+    state_lookup = frame[["state_fips", "state_po", "state"]].drop_duplicates().copy()
+    state_lookup["state_fips"] = state_lookup["state_fips"].map(lambda value: str(int(value)).zfill(2))
+    aggregates = aggregates.merge(state_lookup, on="state_fips", how="left")
     aggregates["vote_share"] = aggregates["votes"] / aggregates["total_votes"]
     public = {
         "metadata": {
