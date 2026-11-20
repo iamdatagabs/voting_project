@@ -38,7 +38,7 @@ REQUIRED = {
 
 
 def git_blob_sha1(payload: bytes) -> str:
-    header = f"blob {len(payload)}\\0".encode()
+    header = f"blob {len(payload)}\0".encode()
     return hashlib.sha1(header + payload).hexdigest()
 
 
@@ -79,7 +79,7 @@ def archive_csv(payload: bytes, archive_name: str) -> pd.DataFrame:
             member = members[0]
         with archive.open(member) as stream:
             header = stream.readline().decode("utf-8-sig", errors="replace")
-            delimiter = "\\t" if header.count("\\t") > header.count(",") else ","
+            delimiter = "\t" if header.count("\t") > header.count(",") else ","
             stream.seek(0)
             chunks = []
             for chunk in pd.read_csv(
