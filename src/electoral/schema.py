@@ -1,7 +1,7 @@
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 Office = Literal["president","senate","house","governor","state_house","state_senate"]
-Geography = Literal["country","state","county","precinct","congressional_district","state_legislative_district"]
+Geography = Literal["country","state","county","precinct","congressional_district","state_legislative_district","other_reporting_unit"]
 ResultStatus = Literal["preliminary","certified","estimated"]
 class ElectionRecord(BaseModel):
     model_config = ConfigDict(extra="forbid")
