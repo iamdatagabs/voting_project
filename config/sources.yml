@@ -10,7 +10,6 @@ sources:
         delivery: https://api.electiondata.dev/v1/county-president
         version_policy: resolve metadata, pin download URL, store SHA-256
         license: CC0-1.0
-    planned:
       - name: us_house_1976_2024
         doi: 10.7910/DVN/IG0UN2
         geography: congressional_district
@@ -18,7 +17,9 @@ sources:
         delivery: https://api.electiondata.dev/v1/house-results
         version_policy: resolve metadata, pin download URL, store SHA-256
         license: CC0-1.0
-      - name: us_senate_statewide_1976_2020
+    planned:
+      - name: us_senate_statewide_1976_2024
+        doi: 10.7910/DVN/PEJ5QU
         geography: state
         office: senate
       - name: us_house_precinct_returns_2024
@@ -33,14 +34,7 @@ sources:
       - name: state_precinct_returns_2024
         geography: precinct
         office: [governor, state_house, state_senate]
-    integrated:
-      - name: us_house_1976_2024
-        doi: 10.7910/DVN/IG0UN2
-        geography: congressional_district
-        office: house
-        delivery: https://api.electiondata.dev/v1/house-results
-        license: CC0-1.0
-    note: Other planned sources require schema-specific adapters and contest identity before ingestion.
+    note: Remaining planned sources require schema-specific adapters and contest identity before ingestion.
   fec:
     publisher: Federal Election Commission
     catalog: https://www.fec.gov/introduction-campaign-finance/election-and-voting-information/
