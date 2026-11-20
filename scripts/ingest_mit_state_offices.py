@@ -109,8 +109,11 @@ def main() -> None:
         )
         listing_response.raise_for_status()
         archives = sorted(
-            item for item in listing_response.json()
-            if item["name"].lower().endswith("24.zip")
+            (
+                item for item in listing_response.json()
+                if item["name"].lower().endswith("24.zip")
+            ),
+            key=lambda item: item["name"],
         )
         if len(archives) != 51:
             raise RuntimeError(f"Expected 51 state/DC archives, found {len(archives)}")
@@ -164,6 +167,11 @@ def main() -> None:
     total_rows["votes"] = total_rows["votes_numeric"]
     missing_votes = int(total_rows["votes"].isna().sum())
     negative_votes = int((total_rows["votes"].fillna(0) < 0).sum())
+    missing_district_rows = int(
+        total_rows["office"].isin(["STATE HOUSE", "STATE SENATE"])
+        .mul(total_rows["district"].eq(""))
+        .sum()
+    )
     valid = total_rows[total_rows["votes"].notna() & (total_rows["votes"] >= 0)].copy()
 
     normalized = []
@@ -260,6 +268,7 @@ def main() -> None:
         "contests": int(silver["contest_id"].nunique()),
         "missing_votes_excluded": missing_votes,
         "negative_votes_excluded": negative_votes,
+        "missing_legislative_district_rows_excluded": missing_district_rows,
         "non_total_mode_rows_excluded": int((bronze["mode"] != "TOTAL").sum()),
         "years": [2024],
         "offices": sorted(silver["office"].unique().tolist()),
