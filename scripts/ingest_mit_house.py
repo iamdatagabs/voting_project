@@ -109,7 +109,7 @@ def main():
     # Denominator is counted once per distinct contest, never once per candidate.
     totals = (
         silver.dropna(subset=["party"])
-        .groupby(["election_year", "state_fips", "geography_name", "party"], as_index=False)["votes"]
+        .groupby(["election_year", "state_fips", "party"], as_index=False)["votes"]
         .sum()
     )
     denominators = (
