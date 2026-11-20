@@ -7,10 +7,8 @@ Silver Parquet and a compact static time-series payload for GitHub Pages.
 from __future__ import annotations
 
 import hashlib
-import io
 import json
 import re
-import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,8 +20,8 @@ DATA = ROOT / "data"
 PUBLIC = ROOT / "apps" / "web" / "data"
 DOI = "doi:10.7910/DVN/VOQCHQ"
 SOURCE_ID = "mit_election_lab.county_president"
-METADATA_URL = "https://dataverse.harvard.edu/api/datasets/:persistentId/"
-DATASET_ACCESS_URL = "https://dataverse.harvard.edu/api/access/dataset/:persistentId/"
+MIRROR_METADATA_URL = "https://api.electiondata.dev/v1/county-president"
+MIRROR_DOWNLOAD_URL = "https://api.electiondata.dev/v1/county-president@{version}/download/county-president.csv"
 
 
 def sha256(path: Path) -> str:
@@ -53,39 +51,23 @@ def main() -> None:
     PUBLIC.mkdir(parents=True, exist_ok=True)
 
     with httpx.Client(timeout=180, follow_redirects=True) as client:
-        response = client.get(METADATA_URL, params={"persistentId": DOI})
+        response = client.get(MIRROR_METADATA_URL)
         response.raise_for_status()
-        metadata = response.json()["data"]
-        version = metadata["latestVersion"]
-        candidates = [
-            item for item in version["files"]
-            if "countypres_2000-2024" in item["dataFile"]["filename"].lower()
-        ]
-        if not candidates:
-            raise RuntimeError("Dataverse latest version has no county presidential data file")
-        source_file = candidates[0]["dataFile"]
-        file_id = source_file["id"]
-        checksum = source_file.get("checksum") or {}
-        expected_md5 = source_file.get("md5") or checksum.get("value")
-        raw_path = raw_dir / source_file["filename"]
-        # Download the version-resolved dataset bundle through Dataverse's
-        # documented dataset-level access endpoint.
-        download = client.get(DATASET_ACCESS_URL, params={"persistentId": DOI})
+        mirror_metadata = response.json()
+        if mirror_metadata.get("validation", {}).get("status") != "pass":
+            raise RuntimeError("Election data mirror validation is not passing")
+        attribution = mirror_metadata.get("source", {}).get("attribution", "")
+        if "10.7910/DVN/VOQCHQ" not in attribution:
+            raise RuntimeError("Mirror metadata does not identify the expected MIT/Dataverse DOI")
+        version = mirror_metadata["version"]
+        download_url = MIRROR_DOWNLOAD_URL.format(version=version)
+        download = client.get(download_url)
         download.raise_for_status()
-        with zipfile.ZipFile(io.BytesIO(download.content)) as archive:
-            matches = [name for name in archive.namelist()
-                       if name.rsplit("/", 1)[-1] == source_file["filename"]]
-            if not matches:
-                raise RuntimeError(
-                    "Dataverse bundle did not contain " + source_file["filename"]
-                    + "; available files: " + str(archive.namelist())
-                )
-            raw_path.write_bytes(archive.read(matches[0]))
+        raw_path = raw_dir / f"county-president-{version}.csv"
+        raw_path.write_bytes(download.content)
 
-    import hashlib as _hashlib
-    actual_md5 = _hashlib.md5(raw_path.read_bytes()).hexdigest()  # noqa: S324 - publisher checksum
-    if expected_md5 and actual_md5.lower() != expected_md5.lower():
-        raise RuntimeError(f"Dataverse MD5 mismatch: expected {expected_md5}, got {actual_md5}")
+    publisher_raw = mirror_metadata.get("source", {}).get("raw", [])
+    publisher_sha256 = publisher_raw[0].get("sha256") if publisher_raw else None
     source_sha256 = sha256(raw_path)
 
     frame = pd.read_csv(raw_path, sep="\t", dtype="string", low_memory=False)
@@ -173,7 +155,7 @@ def main() -> None:
             "doi": "10.7910/DVN/VOQCHQ",
             "dataverse_version": version.get("versionNumber"),
             "dataverse_file_id": file_id,
-            "publisher_md5": expected_md5,
+            "mirror_version": version,\n            "mirror_validation": mirror_metadata.get("validation", {}).get("status"),\n            "publisher_raw_sha256": publisher_sha256,\n            "download_sha256": source_sha256,
             "sha256": source_sha256,
             "extracted_at": stamp,
             "rows_source": int(len(frame)),
@@ -190,7 +172,7 @@ def main() -> None:
     output.write_text(json.dumps(payload, separators=(",", ":"), default=str), encoding="utf-8")
     manifest = {
         **payload["metadata"],
-        "raw_file": str(raw_path.relative_to(ROOT)),
+        "raw_file": str(raw_path.relative_to(ROOT)),\n        "mirror_url": download_url,
         "silver_file": str(parquet_path.relative_to(ROOT)),
         "dashboard_file": str(output.relative_to(ROOT)),
         "rows_silver": int(len(canonical)),
