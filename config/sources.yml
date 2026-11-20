@@ -2,17 +2,42 @@ sources:
   mit_election_lab:
     publisher: MIT Election Data and Science Lab
     catalog: https://electionlab.mit.edu/data
-    datasets:
+    integrated:
       - name: county_presidential_returns_2000_2024
+        doi: 10.7910/DVN/VOQCHQ
         geography: county
         office: president
-        note: Fixar versão, licença, dicionário e checksum antes da carga.
+        delivery: https://api.electiondata.dev/v1/county-president
+        version_policy: resolve metadata, pin download URL, store SHA-256
+        license: CC0-1.0
+    planned:
+      - name: us_house_1976_2024
+        geography: congressional_district
+        office: house
+      - name: us_senate_statewide_1976_2020
+        geography: state
+        office: senate
+      - name: us_house_precinct_returns_2024
+        geography: precinct
+        office: house
+      - name: us_senate_precinct_returns_2024
+        geography: precinct
+        office: senate
+      - name: us_president_precinct_returns_2024
+        geography: precinct
+        office: president
+      - name: state_precinct_returns_2024
+        geography: precinct
+        office: [governor, state_house, state_senate]
+    note: Planned sources require schema-specific adapters and contest identity before ingestion.
   fec:
     publisher: Federal Election Commission
     catalog: https://www.fec.gov/introduction-campaign-finance/election-and-voting-information/
     offices: [president, senate, house]
+    role: federal campaign finance and election reference data
   state_election_offices:
     publisher: State election authorities
     catalog: https://www.usa.gov/state-election-office
     offices: [president, senate, house, governor, state_house, state_senate]
-    note: Fonte primária para certificação; formatos e cobertura variam por estado.
+    role: primary source for certification and state/local contest reconciliation
+    note: Formats, publication cadence, and coverage vary by state.
