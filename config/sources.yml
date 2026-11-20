@@ -1,0 +1,18 @@
+sources:
+  mit_election_lab:
+    publisher: MIT Election Data and Science Lab
+    catalog: https://electionlab.mit.edu/data
+    datasets:
+      - name: county_presidential_returns_2000_2024
+        geography: county
+        office: president
+        note: Fixar versão, licença, dicionário e checksum antes da carga.
+  fec:
+    publisher: Federal Election Commission
+    catalog: https://www.fec.gov/introduction-campaign-finance/election-and-voting-information/
+    offices: [president, senate, house]
+  state_election_offices:
+    publisher: State election authorities
+    catalog: https://www.usa.gov/state-election-office
+    offices: [president, senate, house, governor, state_house, state_senate]
+    note: Fonte primária para certificação; formatos e cobertura variam por estado.
