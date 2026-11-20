@@ -1,13 +1,20 @@
 from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-Office = Literal["president","senate","house","governor","state_house","state_senate"]
-Geography = Literal["country","state","county","precinct","congressional_district","state_legislative_district","other_reporting_unit"]
-ResultStatus = Literal["preliminary","certified","estimated","historical_final"]
+
+Office = Literal["president", "senate", "house", "governor", "state_house", "state_senate"]
+Geography = Literal["country", "state", "county", "precinct", "congressional_district", "state_legislative_district", "other_reporting_unit"]
+ResultStatus = Literal["preliminary", "certified", "estimated", "historical_final"]
+
+
 class ElectionRecord(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
     election_year: int = Field(ge=1788, le=2200)
     election_type: str = Field(min_length=3)
     office: Office
+    contest_id: str | None = None
+    source_row_id: str | None = None
     geography_type: Geography
     geography_id: str = Field(min_length=1)
     geography_name: str = Field(min_length=1)
@@ -22,12 +29,14 @@ class ElectionRecord(BaseModel):
     source_url: str | None = None
     source_published_at: str | None = None
     extracted_at: str
+
     @field_validator("state_fips")
     @classmethod
     def valid_fips(cls, value):
         if value is not None and (not value.isdigit() or len(value) != 2):
             raise ValueError("state_fips must be a two-digit FIPS code")
         return value
+
     @field_validator("total_votes")
     @classmethod
     def total_not_below_candidate(cls, value, info):
