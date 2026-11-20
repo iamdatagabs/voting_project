@@ -7,7 +7,7 @@ Cada linha representa votos de um candidato em uma disputa e unidade geográfica
 | election_year | ano do ciclo |
 | election_type | general, primary, special etc. |
 | office | president, senate, house, governor, state_house, state_senate |
-| geography_type | country, state, county, precinct, congressional_district, state_legislative_district |
+| geography_type | country, state, county, precinct, congressional_district, state_legislative_district, other_reporting_unit |
 | geography_id / geography_name | identificador e nome da unidade |
 | state_fips | FIPS estadual de dois dígitos, se aplicável |
 | district | distrito, quando aplicável |
