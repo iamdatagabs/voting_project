@@ -78,3 +78,19 @@ Citação recomendada: MIT Election Data and Science Lab, 2017, "U.S. House 1976
 Citação recomendada: MIT Election Data and Science Lab, 2017, "U.S. Senate statewide 1976–2024", https://doi.org/10.7910/DVN/PEJ5QU, Harvard Dataverse, V8, UNF:6:jRgjMTzXKaB+psjQ9tTqMQ== [fileUNF].
 
 **Limite de interpretação:** participação nos votos reportados não equivale a turnout da população elegível. A integração não faz validação independente dos certificados oficiais de cada estado; `historical_final` reflete o status da base histórica de origem.
+
+
+## Quarta integração — eleições estaduais 2024
+
+- Fonte: MIT Election Data and Science Lab, *State Precinct-Level Returns 2024*, DOI 10.7910/DVN/DODOBJ; licença CC0 1.0.
+- Distribuição operacional: 51 ZIPs (50 estados + District of Columbia) no repositório [MEDSL/2024-elections-official](https://github.com/MEDSL/2024-elections-official), diretório `individual_states`. O conjunto publicado pelo MIT cobre mais de 54 mil candidatos, 12 mil cargos e 200 mil precincts; a heterogeneidade estadual é explicitada pelo próprio laboratório. <https://electionlab.mit.edu/articles/inside-2024-precinct-project>
+- O pipeline resolve o commit do repositório, fixa os downloads nesse SHA e confere o Git blob SHA-1 de cada ZIP antes de processá-lo. Também grava SHA-256 local, tamanho, nome do arquivo e caminho Raw no manifesto.
+- O adaptador filtra somente `GOVERNOR`, `STATE HOUSE` e `STATE SENATE`. Mantém observações brutas desses cargos em Bronze e seleciona `mode=TOTAL` para Silver, evitando dupla contagem quando o arquivo contém totais e modalidades separadas.
+- Governador é agregado por estado; State House e State Senate são agregados por distrito legislativo. `contest_id` inclui ano, cargo, estado, distrito (quando aplicável) e data da eleição. Candidatos/linhas partidárias são agregados entre precincts antes da validação canônica.
+- Votos ausentes (`*`) e negativos são preservados em Bronze e excluídos de Silver, com contagem explícita. Distritos legislativos ausentes também não são imputados; o adaptador os exclui do agregado distrital e registra essa limitação.
+- O JSON público é um agregado de 2024 por cargo, estado, distrito e partido. Não é uma série temporal e não implica cobertura de todos os estados em todos os cargos.
+- Artefatos: `data/raw/mit_medsl_state_precinct_2024/*.zip`, `data/bronze/mit_state_offices_precinct_2024.parquet`, `data/silver/mit_state_offices_2024.parquet`, manifesto e `apps/web/data/state-offices-2024.json`.
+
+Citação: MIT Election Data and Science Lab, 2026, "State Precinct-Level Returns 2024", https://doi.org/10.7910/DVN/DODOBJ, Harvard Dataverse, V1. Distribuição por estado: "Precinct-Level Returns 2024 by Individual State", https://doi.org/10.7910/DVN/NYTPDU, Harvard Dataverse, V1.
+
+**Caveats:** o MIT documenta heterogeneidade de fontes estaduais, dados suprimidos, casos de ausência de distrito, voto por fusão partidária em New York, e possíveis artefatos de correção. O painel mantém as linhas partidárias conforme MEDSL; a participação é calculada sobre os votos reportados no contest, não é turnout de eleitores elegíveis. Não há reconciliação independente com os certificados oficiais estaduais nesta integração. O filtro `mode=TOTAL` é deliberado para impedir dupla contagem; observações sem TOTAL não entram no comparativo.
