@@ -144,7 +144,7 @@ def main() -> None:
     frame["geography_name"] = frame["county_name"]
     frame["state_fips"] = pd.NA
     frame["district"] = pd.NA
-    frame["result_status"] = "certified"
+    frame["result_status"] = "historical_final"
     frame["source_id"] = SOURCE_ID
     frame["source_url"] = "https://doi.org/" + DOI
     frame["source_published_at"] = frame["version"].astype("string")
@@ -207,7 +207,7 @@ def main() -> None:
             "rows_missing_total_votes_excluded": omitted_missing_totals,
             "years": sorted(int(year) for year in frame["election_year"].unique()),
             "geography": "county-level, aggregated to state and national series",
-            "status": "certified_source_returns",
+            "status": "historical_final_source_returns",
             "license": source_metadata.get("source", {}).get("license", "CC0-1.0"),
         },
         "national": national_series.sort_values(
