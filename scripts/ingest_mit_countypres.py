@@ -76,6 +76,7 @@ def main() -> None:
     publisher_sha256 = publisher_raw[0].get("sha256") if publisher_raw else None
 
     frame = pd.read_csv(raw_path, dtype="string", low_memory=False)
+    rows_downloaded = int(len(frame))
     frame.columns = [str(column).strip() for column in frame.columns]
     aliases = {
         "FIPS": "county_fips",
@@ -200,7 +201,8 @@ def main() -> None:
             "upstream_source_sha256": publisher_sha256,
             "download_sha256": source_sha256,
             "extracted_at": extracted_at,
-            "rows_source": int(len(frame)),
+            "rows_downloaded": rows_downloaded,
+            "rows_silver": int(len(frame)),
             "rows_missing_candidate_votes_excluded": omitted_missing_votes,
             "rows_missing_total_votes_excluded": omitted_missing_totals,
             "years": sorted(int(year) for year in frame["election_year"].unique()),
