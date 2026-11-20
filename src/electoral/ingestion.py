@@ -1,8 +1,10 @@
-import hashlib, json
+import hashlib
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
-import httpx, pandas as pd
+import httpx
+import pandas as pd
 from .config import DATA_DIR
 from .quality import REQUIRED_COLUMNS, validate_records
 def ingest_csv(url: str, source_id: str, election_year: int, office: str, geography: str, status: str, timeout: float = 60) -> dict:
