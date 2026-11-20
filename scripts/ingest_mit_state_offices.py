@@ -233,7 +233,7 @@ def main() -> None:
     candidate_rows = pd.DataFrame(normalized)
     if candidate_rows.empty:
         raise RuntimeError("No usable governor/state-legislative rows after validation rules.")
-    grouping = ["contest_id", "election_year", "office", "geography_type",
+    grouping = ["contest_id", "election_year", "election_type", "office", "geography_type",
                 "geography_id", "geography_name", "state_fips", "district",
                 "candidate", "party"]
     aggregated = candidate_rows.groupby(grouping, dropna=False, as_index=False)["votes"].sum()
