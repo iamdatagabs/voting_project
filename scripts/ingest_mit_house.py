@@ -107,13 +107,14 @@ def main():
     silver.to_parquet(silver_path, index=False)
 
     # Denominator is counted once per distinct contest, never once per candidate.
+    general = silver[(silver["election_type"] == "general") & ~silver["contest_id"].str.contains("-S1-|-R1-", regex=True)]
     totals = (
-        silver.dropna(subset=["party"])
+        general.dropna(subset=["party"])
         .groupby(["election_year", "state_fips", "party"], as_index=False)["votes"]
         .sum()
     )
     denominators = (
-        silver.drop_duplicates("contest_id")
+        general.drop_duplicates("contest_id")
         .groupby(["election_year", "state_fips"], as_index=False)["total_votes"]
         .sum(min_count=1)
     )
