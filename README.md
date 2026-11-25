@@ -6,7 +6,7 @@ Plataforma aberta de engenharia de dados e análise estatística eleitoral dos E
 
 > Núcleo de engenharia e dashboard publicados. Os conectores aceitam CSV no contrato canônico. Não declaramos uma base nacional de 2026 completa: resultados variam entre preliminares e certificados conforme jurisdição. Ausência de dados nunca é tratada como zero.
 
-## Arquitetura
+**Dashboard:** [GitHub Pages](https://iamdatagabs.github.io/voting_project/) · **Portfolio:** [Gabriel Passos](https://iamdatagabs.github.io/iamdatagabs/portfolio/)\n\n## Arquitetura
 Fontes públicas → Raw (bytes + SHA-256) → Bronze (normalizado) → Silver (validado) → Gold (Parquet) → DuckDB → FastAPI → dashboard estático (GitHub Pages).
 
 - Python 3.11, Pydantic, pandas/PyArrow, DuckDB, FastAPI.
